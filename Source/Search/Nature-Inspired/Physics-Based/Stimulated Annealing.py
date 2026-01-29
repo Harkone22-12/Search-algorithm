@@ -2,6 +2,7 @@ import math
 import random
 from abc import ABC, abstractmethod
 from typing import Callable, Tuple, List, Optional
+from Source.Problems import problem
 import numpy as np
 
 from Source.Problems.problem import SearchProblem
@@ -84,7 +85,9 @@ class SimulatedAnnealing(SearchAlgorithm):
         
         return math.exp(-delta_cost / temperature)
     
-    def search(self, problem: OptimizationProblem):
+    def search(self, problem: SearchProblem):
+        assert isinstance(problem, OptimizationProblem)
+
         """
         Run the Simulated Annealing optimization algorithm.
         
@@ -123,8 +126,9 @@ class SimulatedAnnealing(SearchAlgorithm):
                     break
                     
                 # Get first neighbor (SA typically explores one neighbor per iteration)
-                neighbor_state, _ = successors[0]
-                neighbor_cost = problem.evaluate_state(neighbor_state)
+                neighbor_state, cost_diff = successors[0]
+                neighbor_cost = current_cost + cost_diff
+
                 
                 # Calculate acceptance probability
                 acceptance_prob = self._acceptance_probability(
