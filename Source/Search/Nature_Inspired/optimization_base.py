@@ -1,8 +1,3 @@
-"""
-Base classes for optimization algorithms.
-Provides common interfaces for GA, DE, ACO, SA, PSO, and other metaheuristics.
-"""
-
 import random
 from abc import ABC, abstractmethod
 from typing import Callable, List, Optional, Tuple

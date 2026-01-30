@@ -1,7 +1,7 @@
 import math
 import random
 from abc import ABC, abstractmethod
-from typing import Callable, Tuple, List, Optional
+from typing import Any, Callable, Dict, Tuple, List, Optional
 from Source.Problems import problem
 import numpy as np
 
@@ -85,7 +85,7 @@ class SimulatedAnnealing(SearchAlgorithm):
         
         return math.exp(-delta_cost / temperature)
     
-    def search(self, problem: SearchProblem):
+    def search(self, problem: SearchProblem) -> Dict[str, Any]:
         assert isinstance(problem, OptimizationProblem)
 
         """
