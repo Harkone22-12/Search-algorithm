@@ -1,60 +1,166 @@
 # SEARCH & NATURE-INSPIRED ALGORITHMS
 
-A comprehensive benchmarking framework for comparing nature-inspired optimization algorithms.
+A comprehensive framework for implementing, experimenting with, and comparing **classical search algorithms** and **nature-inspired optimization algorithms** as required in the course project.
 
-## Overview
+This project is developed as a **group assignment** and focuses on both **algorithm implementation** and **experimental comparison** across multiple problem domains.
 
-This project implements and evaluates search algorithms from two main families:
+---
 
-- **Classical Search** - Traditional algorithmic approaches (placeholder)
-- **Nature-Inspired Algorithms** - Bio-inspired and physics-inspired optimizers (ABC, Firefly, Cuckoo, Simulated Annealing)
+## Project Objectives
 
-Current focus: Benchmarking on continuous optimization problems (Sphere function, 5D)
+- Implement search and optimization algorithms from multiple categories
+- Understand differences between **exact search** and **metaheuristic optimization**
+- Apply algorithms to **continuous** and **discrete** problems
+- Compare algorithms using solution quality, convergence, and computational cost
+- Design a reusable and extensible software architecture
 
-## Learning Objectives
+---
 
-- Understand how nature-inspired optimization algorithms work
-- Design experiments to compare multiple algorithms
-- Analyze performance using multiple metrics (quality, speed, robustness, scalability)
-- Perform parameter sensitivity analysis
-- Apply statistical hypothesis testing for algorithm comparison
+## Implemented Algorithm Categories
+
+### 1️⃣ Evolution-Based Algorithms
+- **Differential Evolution (DE)** ✅
+- **Genetic Algorithm (GA)** ✅
+
+---
+
+### 2️⃣ Physics-Based Algorithms
+- **Simulated Annealing (SA)** ✅
+
+SA is implemented and used both as:
+- A classical local search method
+- A metaheuristic optimization algorithm
+
+---
+
+### 3️⃣ Biology-Based Algorithms
+- **Particle Swarm Optimization (PSO)** ✅
+- **Artificial Bee Colony (ABC)** ✅
+- **Firefly Algorithm (FA)** ✅
+- **Cuckoo Search (CS)** ✅
+- **Ant Colony Optimization (ACO)** ✅
+
+This category is fully satisfied with multiple algorithms implemented.
+
+---
+
+### 4️⃣ Human-Based Algorithms (Optional / Bonus)
+- **Teaching–Learning-Based Optimization (TLBO)** ⏳ (not required)
+
+---
+
+### 5️⃣ Traditional (Classical) Search Algorithms
+At least four traditional algorithms are required.
+
+Implemented:
+- **Breadth-First Search (BFS)** ✅
+- **Depth-First Search (DFS)** ✅
+- **A\* Search** ✅
+- **Hill Climbing** ✅
+- **Simulated Annealing** ✅
+
+✔ Requirement satisfied with more than four algorithms.
+
+---
+
+## Supported Problems
+
+### 🔹 Continuous Optimization
+- Sphere Function (n-dimensional)
+- Parameter sensitivity analysis
+
+### 🔹 Discrete & Combinatorial Problems
+- Traveling Salesman Problem (TSP)
+- Knapsack Problem (KP)
+- Graph Coloring (GC)
+- Shortest Path Problem
+
+Each problem is designed to be compatible with:
+- Classical search algorithms (when applicable)
+- Nature-inspired optimization algorithms using cost minimization
+
+---
 
 ## Project Structure
 
-```
+```text
 Source/
-├── Search/Nature_Inspired/
-│   ├── Biology-Based/       (ABC, Firefly, Cuckoo)
-│   └── Physics-Based/       (Simulated Annealing)
-└── Problems/Continuous/
-    ├── Benchmarking tools & output plots
-    └── Parameter sensitivity analysis
+├── Search/
+│   ├── Search.py                  # Base SearchAlgorithm abstraction
+│   ├── traditional/               # BFS, DFS, A*, Hill Climbing
+│   └── Nature_Inspired/
+│       ├── Physics-Based/         # Simulated Annealing
+│       ├── Biology-Based/         # PSO, ABC, FA, CS
+│       └── Evolution-Based/       # DE, GA
+│
+├── Problems/
+│   ├── problem.py                 # Base SearchProblem abstraction
+│   ├── Continuous/                # Sphere
+│   └── Discrete/                  # TSP, KP, GC, Shortest Path
+│
+└── Experiments/
+    ├── Benchmark scripts
+    └── Result plots & statistics
+
 ```
 
-## Quick Start
+## Design Principles
 
-Compare algorithms:
+Algorithms are problem-agnostic
 
+- Problems are algorithm-independent
+
+- All optimization problems follow a minimization convention
+
+- Constraints are handled via penalty functions
+
+- Continuous algorithms applied to discrete problems use encoding/decoding
+
+- Each algorithm reports:
+
+    - Best solution
+
+    - Best cost
+
+    - Iteration history
+
+    - Expanded/evaluated states
+
+## Example Usage
+
+### Continuous Optimization
 ```bash
 python -m Source.Problems.Continuous.test_bioinspired_sphere ABC Firefly
 ```
 
-Optimize parameters:
-
+### Parameter Sensitivity Analysis
 ```bash
 python -m Source.Problems.Continuous.test_parameter_sensitivity ABC
 ```
 
-## Documentation
-
-- [TEST_BIOINSPIRED_SPHERE.md](Source/Problems/Continuous/TEST_BIOINSPIRED_SPHERE.md) - Benchmarking guide
-- [TEST_PARAMETER_SENSITIVITY.md](Source/Problems/Continuous/TEST_PARAMETER_SENSITIVITY.md) - Parameter tuning guide
+### Discrete Optimization
+```python
+problem = TSPProblem(cities)
+result = sa.search(problem)
+print(result["best_state"], result["cost"])
+```
 
 ## Requirements
-
-```
+```text
 Python 3.7+
-numpy, scipy, matplotlib
+numpy
+scipy
+matplotlib
 ```
+## Status
 
-**Status**: Work in progress - Core framework complete, detailed content to be added
+
+- Core framework: ✅ complete
+
+- Required algorithms: ✅ implemented
+
+- Discrete & continuous problems: ✅ implemented
+
+- Benchmarking & comparison: ⚙️ in progress
+
+- Optional algorithms (GA, ACO, TLBO): ⏳ future work
