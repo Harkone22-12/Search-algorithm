@@ -21,6 +21,8 @@ class HillClimbing(SearchAlgorithm):
     - Steepest Ascent: choose best neighbor
     - First-Choice: accept first improvement
     - Random Restart: try multiple starting points
+    
+    Note: history contains ALL evaluations across ALL restarts (cumulative).
     """
     
     def __init__(
@@ -40,7 +42,7 @@ class HillClimbing(SearchAlgorithm):
             max_iterations: max steps per climb
             max_restarts: number of random restarts
             allow_sideways: allow equal-cost moves
-            max_sideways_moves: max consecutive sideways moves
+            max_sideways_moves: max consecutive sideways moves per climb
             seed: random seed
         """
         super().__init__()
@@ -57,8 +59,6 @@ class HillClimbing(SearchAlgorithm):
         self.best_state = None
         self.best_cost = float('inf')
         self.history = []
-        self.path = []
-        self.num_sideways_moves = 0
     
     def search(self, problem: SearchProblem) -> Dict[str, Any]:
         """
@@ -71,37 +71,37 @@ class HillClimbing(SearchAlgorithm):
             Dictionary with:
             - best_state: best solution found
             - cost: best cost
-            - history: cost over iterations
-            - expanded_nodes: number of evaluations
+            - history: cost over ALL iterations (cumulative across restarts)
+            - expanded_nodes: total evaluations
+            - stats: additional info
         """
         assert isinstance(problem, OptimizationProblem), \
             "Hill Climbing requires OptimizationProblem"
         
+        # Reset state
         self.expanded_nodes = 0
         self.history = []
-        self.path = []
         
-        # Initial climb
-        current_state = problem.get_start_state()
-        current_cost = problem.evaluate_state(current_state)
+        # Initial climb from start state
+        start_state = problem.get_start_state()
+        start_cost = problem.evaluate_state(start_state)
         self.expanded_nodes += 1
         
-        self.best_state = current_state
-        self.best_cost = current_cost
-        self.history.append(current_cost)
-        self.path.append(current_state)
+        # First climb (pass cost to avoid double evaluate)
+        final_state, final_cost = self._single_climb(problem, start_state, start_cost)
         
-        # Main climb
-        final_state, final_cost = self._single_climb(problem, current_state)
-        
-        if final_cost < self.best_cost:
-            self.best_state = final_state
-            self.best_cost = final_cost
+        self.best_state = final_state
+        self.best_cost = final_cost
         
         # Random restarts
         for restart in range(self.max_restarts):
             restart_state = problem.generate_random_state()
-            restart_final, restart_cost = self._single_climb(problem, restart_state)
+            restart_start_cost = problem.evaluate_state(restart_state)
+            self.expanded_nodes += 1
+            
+            restart_final, restart_cost = self._single_climb(
+                problem, restart_state, restart_start_cost
+            )
             
             if restart_cost < self.best_cost:
                 self.best_state = restart_final
@@ -112,19 +112,37 @@ class HillClimbing(SearchAlgorithm):
             'cost': self.best_cost,
             'history': self.history,
             'expanded_nodes': self.expanded_nodes,
-            'path': self.path,
             'stats': {
                 'variant': self.variant,
                 'num_restarts': self.max_restarts,
-                'final_iterations': len(self.history)
+                'total_iterations': len(self.history)
             }
         }
     
-    def _single_climb(self, problem: OptimizationProblem, start_state) -> tuple:
-        """Perform one hill climbing attempt."""
+    def _single_climb(
+        self, 
+        problem: OptimizationProblem, 
+        start_state,
+        start_cost: float
+    ) -> tuple:
+        """
+        Perform one hill climbing attempt.
+        
+        Args:
+            problem: optimization problem
+            start_state: starting state
+            start_cost: pre-computed cost of start_state (to avoid re-evaluate)
+            
+        Returns:
+            (final_state, final_cost)
+        """
         current = start_state
-        current_cost = problem.evaluate_state(current)
-        self.expanded_nodes += 1
+        current_cost = start_cost
+        
+        # Reset sideways counter for THIS climb
+        num_sideways = 0
+        
+        # Record initial cost
         self.history.append(current_cost)
         
         for iteration in range(self.max_iterations):
@@ -146,7 +164,7 @@ class HillClimbing(SearchAlgorithm):
                         best_neighbor = neighbor
                         best_cost = neighbor_cost
                     elif self.allow_sideways and neighbor_cost == best_cost:
-                        if self.num_sideways_moves < self.max_sideways_moves:
+                        if num_sideways < self.max_sideways_moves:
                             best_neighbor = neighbor
                             best_cost = neighbor_cost
                 
@@ -155,9 +173,9 @@ class HillClimbing(SearchAlgorithm):
                 
                 # Update sideways counter
                 if best_cost == current_cost:
-                    self.num_sideways_moves += 1
+                    num_sideways += 1
                 else:
-                    self.num_sideways_moves = 0
+                    num_sideways = 0
                 
                 current = best_neighbor
                 current_cost = best_cost
@@ -180,7 +198,7 @@ class HillClimbing(SearchAlgorithm):
                 if not improved:
                     break
             
+            # Record cost after each step
             self.history.append(current_cost)
-            self.path.append(current)
         
         return current, current_cost
