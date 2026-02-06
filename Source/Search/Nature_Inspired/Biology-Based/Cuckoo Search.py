@@ -1,6 +1,6 @@
 import random
 import math
-from typing import Tuple, List
+from typing import Any, Tuple, List, Dict
 from Source.Problems import problem
 import numpy as np
 from Source.Problems.problem import SearchProblem
@@ -51,7 +51,7 @@ class CuckooSearch(SearchAlgorithm):
             random.seed(seed)
             np.random.seed(seed)
     
-    def search(self, problem: SearchProblem):
+    def search(self, problem: SearchProblem) -> Dict[str, Any]:
         assert isinstance(problem, OptimizationProblem)
         """
         Execute Cuckoo Search algorithm.
