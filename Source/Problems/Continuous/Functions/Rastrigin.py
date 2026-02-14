@@ -8,11 +8,11 @@ class RastriginProblem(OptimizationProblem):
     
     def __init__(self, dimensions: int = 5, bounds: Tuple[float, float] = (-5.12, 5.12)):
         """
-        Khởi tạo bài toán Rastrigin.
+        Initialize the Rastrigin problem.
         
         Args:
-            dimensions: Số chiều (mặc định là 5)
-            bounds: Khoảng tìm kiếm (mặc định [-5.12, 5.12])
+            dimensions: Number of dimensions (default 5)
+            bounds: Search space bounds (default [-5.12, 5.12])
         """
         self.dimensions = dimensions
         self.bounds = [bounds] * dimensions
@@ -20,42 +20,39 @@ class RastriginProblem(OptimizationProblem):
         self.optimum_solution = np.zeros(dimensions)
     
     def get_start_state(self) -> List[float]:
-        """Tạo trạng thái bắt đầu ngẫu nhiên."""
+        """Get an initial random solution."""
         return self.generate_random_state()
     
     def evaluate_state(self, state: List[float]) -> float:
         """
-        Đánh giá hàm Rastrigin:
+        Evaluate the Rastrigin function:
         f(x) = 10n + Σ(x_i^2 - 10*cos(2*π*x_i))
         """
-        n = len(state)
-        res = 10 * n
-        for x in state:
-            res += (x**2 - 10 * math.cos(2 * math.pi * x))
-        return res
+        x = np.array(state)
+        return 10 * len(x) + np.sum(x**2 - 10 * np.cos(2 * np.pi * x))
     
     def generate_random_state(self) -> List[float]:
-        """Tạo lời giải ngẫu nhiên trong giới hạn bounds."""
+        """Generate a random solution within the bounds."""
         return [
             np.random.uniform(self.bounds[i][0], self.bounds[i][1])
             for i in range(self.dimensions)
         ]
     
     def is_goal(self, state: List[float]) -> bool:
-        """Kiểm tra nếu đạt mục tiêu (thường không dùng trong tối ưu hóa liên tục)."""
+        """Check if the goal is reached (never true for continuous optimization)."""
         return False
     
     def get_successors(self, state: List[float]) -> List[Tuple[List[float], float]]:
-        """Lấy các lời giải lân cận bằng cách thay đổi nhỏ ở từng chiều."""
+        """Get neighboring solutions by applying a small delta to each dimension."""
         successors = []
         for i in range(self.dimensions):
             for delta in [-0.1, 0.1]:
                 neighbor = state.copy()
                 neighbor[i] += delta
-                # Giới hạn giá trị trong bounds
+                # Clip the value to stay within bounds
                 neighbor[i] = np.clip(neighbor[i], self.bounds[i][0], self.bounds[i][1])
                 
-                # Tính toán chi phí chênh lệch (cost)
+                # Calculate the difference in cost
                 cost = self.evaluate_state(neighbor) - self.evaluate_state(state)
                 successors.append((neighbor, cost))
         return successors

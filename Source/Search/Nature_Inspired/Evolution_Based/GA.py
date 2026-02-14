@@ -70,7 +70,7 @@ class GeneticAlgorithm(SearchAlgorithm):
                 if random.random() < self.crossover_rate:
                     child1, child2 = self._arithmetic_crossover(parent1, parent2)
                 else:
-                    child1, child2 = child1, child2 = parent1, parent2
+                    child1, child2 = parent1, parent2
                 
                 # 4. MUTATION: Gaussian Mutation
                 child1 = self._gaussian_mutation(child1, problem)
