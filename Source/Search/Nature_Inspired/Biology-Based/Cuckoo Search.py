@@ -7,7 +7,6 @@ from Source.Problems.problem import SearchProblem
 from Source.Search.Search import SearchAlgorithm
 from Source.Search.Nature_Inspired.optimization_base import OptimizationProblem
 
-# filepath: e:\Git\Search-algorithm\Source\Search\Nature-Inspired\Biology-Based\Cuckoo Search.py
 """
 Cuckoo Search (CS) Algorithm
 A nature-inspired metaheuristic based on the parasitic breeding behavior of cuckoo birds.
