@@ -3,12 +3,7 @@ from Source.Problems.problem import SearchProblem
 
 class DFS(SearchAlgorithm):
     def search(self, problem: SearchProblem):
-        """
-        Khám phá các node sâu nhất trong cây tìm kiếm trước.
-        """
         start_state = problem.get_start_state()
-        
-        # Stack chứa: (state hiện tại, đường đi đến state đó, tổng chi phí)
         frontier = [(start_state, [start_state], 0)]
         explored = set()
         self.expanded_nodes = 0
@@ -17,7 +12,11 @@ class DFS(SearchAlgorithm):
             current_state, path, current_cost = frontier.pop()
             
             if problem.is_goal(current_state):
-                return path, current_cost
+                return {
+                    'path': path, 
+                    'cost': float(current_cost), 
+                    'nodes': self.expanded_nodes
+                }
             
             if current_state not in explored:
                 explored.add(current_state)
@@ -29,4 +28,4 @@ class DFS(SearchAlgorithm):
                         new_cost = current_cost + cost
                         frontier.append((next_state, new_path, new_cost))
                         
-        return None, float('inf')
+        return {'path': None, 'cost': float('inf'), 'nodes': self.expanded_nodes}
