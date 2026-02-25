@@ -1,24 +1,16 @@
-from abc import ABC, abstractmethod
+from Source.Search.Nature_Inspired.optimization_base import OptimizationProblem
+from abc import abstractmethod
 
-class SearchProblem(ABC):
+class SearchProblem(OptimizationProblem):
+    """The bridge between classical search and metaheuristics."""
     @abstractmethod
-    def get_start_state(self):
-        pass
-
-    @abstractmethod
-    def is_goal(self, state):
-        pass
+    def get_start_state(self): pass
 
     @abstractmethod
-    def get_successors(self, state):
-        """
-        Return list of (next_state, cost)
-        """
-        pass
+    def is_goal(self, state): pass
+
+    @abstractmethod
+    def get_successors(self, state): pass
 
     def heuristic(self, state):
-        """
-        Default heuristic = 0
-        A* sẽ override hoặc dùng cái này
-        """
-        return 0
+        return 0 # Default for A*
