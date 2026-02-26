@@ -234,46 +234,41 @@ def plot_execution_time_comparison(results: Dict, problem_name: str, output_dir:
     plt.close()
 
 def plot_convergence_curves_comparison(results: Dict, max_iterations: int, problem_name: str, output_dir: str, file_prefix: str = ""):
-    """Plot convergence curves for each algorithm."""
-    num_algos = len(results)
-    fig, axes = plt.subplots(1, num_algos, figsize=(5 * num_algos, 5), sharey=True)
+    """Plot convergence curves for each algorithm on a single plot."""
+    fig, ax = plt.subplots(figsize=(12, 8))
     
-    if num_algos == 1:
-        axes = [axes]
-
     algo_names = sorted(list(results.keys()))
-    colors = plt.cm.viridis(np.linspace(0, 1, num_algos))
+    # Sử dụng colormap có độ tương phản tốt cho các đường line
+    colors = plt.cm.get_cmap('tab10', len(algo_names))
     
     for idx, algo_name in enumerate(algo_names):
-        ax = axes[idx]
         result = results[algo_name]
         
+        # Chuẩn hóa độ dài các đường cong
         max_len = max_iterations + 1
         standardized_curves = []
         for curve in result.convergence_curves:
             if not curve: continue
+            # Thêm padding nếu thuật toán kết thúc sớm
             padding = [curve[-1]] * (max_len - len(curve)) if len(curve) < max_len else []
             standardized_curves.append(curve[:max_len] + padding)
 
         if not standardized_curves: continue
 
-        for curve in standardized_curves[:5]:
-            ax.plot(curve, alpha=0.5, linewidth=1, color=colors[idx])
-        
+        # Tính đường cong hội tụ trung bình
         avg_curve = np.mean(standardized_curves, axis=0)
-        ax.plot(avg_curve, 'k-', linewidth=2.5, label='Average')
         
-        ax.set_xlabel('Iteration', fontsize=11, fontweight='bold')
-        if idx == 0:
-            ax.set_ylabel('Fitness Value (log)', fontsize=11, fontweight='bold')
+        # Vẽ đường cong trung bình cho thuật toán này
+        ax.plot(avg_curve, color=colors(idx), linewidth=2, label=algo_name)
         
-        ax.set_title(f'{algo_name} Convergence', fontsize=12, fontweight='bold')
-        ax.grid(True, alpha=0.3)
-        ax.legend(fontsize=10)
-        ax.set_yscale('log')
+    ax.set_xlabel('Iteration', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Fitness Value (log scale)', fontsize=12, fontweight='bold')
+    ax.set_title(f'Convergence Curve Comparison on {problem_name}', fontsize=14, fontweight='bold')
+    ax.grid(True, which="both", linestyle='--', linewidth=0.5)
+    ax.set_yscale('log')
+    ax.legend(loc='upper right', fontsize=10)
     
-    fig.suptitle(f'Convergence Comparison on {problem_name}', fontsize=16, fontweight='bold')
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.tight_layout()
     filename_prefix = f"{file_prefix}_" if file_prefix else ""
     output_path = Path(output_dir) / f"{filename_prefix}03_convergence_curves.png"
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
