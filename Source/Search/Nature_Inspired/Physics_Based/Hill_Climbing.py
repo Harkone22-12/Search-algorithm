@@ -83,7 +83,7 @@ class HillClimbing(SearchAlgorithm):
         self.history = []
         
         # Initial climb from start state
-        start_state = problem.get_start_state()
+        start_state = problem.generate_random_state()
         start_cost = problem.evaluate_state(start_state)
         self.expanded_nodes += 1
         

@@ -4,17 +4,18 @@ from Source.Problems.problem import SearchProblem
 
 class BFS(SearchAlgorithm):
     def search(self, problem: SearchProblem):
-        """
-        Khám phá các node ở tầng nông nhất trước.
-        """
         start_state = problem.get_start_state()
-        if problem.is_goal(start_state):
-            return [start_state], 0
+        self.expanded_nodes = 0
 
-        # Queue chứa: (state hiện tại, đường đi đến state đó, tổng chi phí)
+        if problem.is_goal(start_state):
+            return {
+                'path': [start_state], 
+                'cost': 0.0, 
+                'nodes': self.expanded_nodes
+            }
+
         frontier = deque([(start_state, [start_state], 0)])
         explored = {start_state}
-        self.expanded_nodes = 0
 
         while frontier:
             current_state, path, current_cost = frontier.popleft()
@@ -26,9 +27,13 @@ class BFS(SearchAlgorithm):
                     new_cost = current_cost + cost
                     
                     if problem.is_goal(next_state):
-                        return new_path, new_cost
+                        return {
+                            'path': new_path, 
+                            'cost': float(new_cost), 
+                            'nodes': self.expanded_nodes
+                        }
                     
                     explored.add(next_state)
                     frontier.append((next_state, new_path, new_cost))
         
-        return None, float('inf')
+        return {'path': None, 'cost': float('inf'), 'nodes': self.expanded_nodes}

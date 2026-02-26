@@ -103,7 +103,8 @@ class SimulatedAnnealing(SearchAlgorithm):
                 - iteration_history: Cost history
                 - stats: Additional statistics
         """
-        current_state = problem.get_start_state()
+        # Khởi tạo lộ trình đầy đủ cho Local Search thay vì trạng thái rỗng
+        current_state = problem.generate_random_state()
         current_cost = problem.evaluate_state(current_state)
         
         self.best_state = current_state

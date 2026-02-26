@@ -75,7 +75,18 @@ class ArtificialBeeColony(SearchAlgorithm):
                     self.trials[i] += 1
 
             # Onlooker bees
-            probs = (1 / (1 + self.costs)) / np.sum(1 / (1 + self.costs))
+            # Onlooker bees
+            # 1. Tính fitness an toàn cho cả số âm và số dương
+            fitness = np.zeros_like(self.costs)
+            for idx, c in enumerate(self.costs):
+                if c >= 0:
+                    fitness[idx] = 1.0 / (1.0 + c)
+                else:
+                    fitness[idx] = 1.0 + abs(c)
+            
+            # 2. Tính xác suất (chắc chắn sẽ là số dương)
+            probs = fitness / np.sum(fitness)
+            
             for _ in range(self.colony_size - self.num_employed):
                 i = np.random.choice(self.colony_size, p=probs)
                 k = np.random.choice([j for j in range(self.colony_size) if j != i])
