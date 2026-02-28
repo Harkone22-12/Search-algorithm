@@ -318,48 +318,86 @@ def plot_algorithm_comparison(results: Dict, max_iterations: int, problem_name: 
 # --- Sensitivity Analysis Plots ---
 
 def plot_parameter_sensitivity(param_name: str, results: Dict, output_dir: str):
-    """Create plots for parameter sensitivity."""
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    """Create plots for parameter sensitivity showing 3 key metrics."""
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     
     param_values = results['param_values']
     mean_fitness = results['mean_fitness']
-    std_fitness = results['std_fitness']
     best_fitness = results.get('best_fitness', [])
+    robustness = results.get('robustness', [])
+    exploration_score = results.get('exploration_score', [])
+    exploitation_score = results.get('exploitation_score', [])
+    exec_times = results['exec_times']
     
-    # Plot 1: Fitness vs Parameter Value
-    ax1 = axes[0]
-    ax1.errorbar(range(len(param_values)), mean_fitness, yerr=std_fitness, 
-                fmt='o-', color='#3498db', ecolor='#95a5a6', capsize=5, 
-                capthick=2, linewidth=2, markersize=8, label='Mean ± Std')
-    if best_fitness:
-        ax1.plot(range(len(param_values)), best_fitness, 's--', color='#2ecc71', 
-                 linewidth=2, markersize=6, label='Best')
+    # Plot 1: Best/Average Quality
+    ax1 = axes[0, 0]
+    ax1.plot(range(len(param_values)), best_fitness, 'o-', color='#2ecc71', 
+             linewidth=2.5, markersize=8, label='Best Fitness')
+    ax1.plot(range(len(param_values)), mean_fitness, 's--', color='#3498db', 
+             linewidth=2.5, markersize=7, label='Mean Fitness')
     
-    ax1.set_xlabel(f'{param_name}', fontsize=12, fontweight='bold')
-    ax1.set_ylabel('Fitness Value', fontsize=12, fontweight='bold')
-    ax1.set_title(f'Solution Quality vs {param_name}', fontsize=13, fontweight='bold')
+    ax1.set_xlabel(f'{param_name}', fontsize=11, fontweight='bold')
+    ax1.set_ylabel('Fitness Value', fontsize=11, fontweight='bold')
+    ax1.set_title('1. Best/Average Quality (Lower is Better)', fontsize=12, fontweight='bold')
     ax1.set_xticks(range(len(param_values)))
     ax1.set_xticklabels([f'{v}' for v in param_values], rotation=45)
     ax1.grid(True, alpha=0.3)
     ax1.set_yscale('log')
     ax1.legend(fontsize=10)
     
-    # Plot 2: Execution Time vs Parameter Value
-    ax2 = axes[1]
-    exec_times = results['exec_times']
-    bars = ax2.bar(range(len(param_values)), exec_times, color='#e74c3c', alpha=0.7, edgecolor='black')
+    # Plot 2: Robustness
+    ax2 = axes[0, 1]
+    bars = ax2.bar(range(len(param_values)), robustness, color='#e74c3c', alpha=0.7, edgecolor='black')
     
-    ax2.set_xlabel(f'{param_name}', fontsize=12, fontweight='bold')
-    ax2.set_ylabel('Execution Time (seconds)', fontsize=12, fontweight='bold')
-    ax2.set_title(f'Execution Time vs {param_name}', fontsize=13, fontweight='bold')
+    ax2.set_xlabel(f'{param_name}', fontsize=11, fontweight='bold')
+    ax2.set_ylabel('Std Deviation', fontsize=11, fontweight='bold')
+    ax2.set_title('2. Robustness: Consistency (Lower Std is Better)', fontsize=12, fontweight='bold')
     ax2.set_xticks(range(len(param_values)))
     ax2.set_xticklabels([f'{v}' for v in param_values], rotation=45)
     ax2.grid(True, alpha=0.3, axis='y')
+    ax2.set_yscale('log')
+    
+    for bar, rob_val in zip(bars, robustness):
+        height = bar.get_height()
+        ax2.text(bar.get_x() + bar.get_width()/2., height,
+                f'{rob_val:.2e}', ha='center', va='bottom', fontsize=8)
+    
+    # Plot 3: Exploration vs Exploitation
+    ax3 = axes[1, 0]
+    x_pos = np.arange(len(param_values))
+    width = 0.35
+    
+    bars1 = ax3.bar(x_pos - width/2, exploration_score, width, label='Exploration (Early Improvement)', 
+                    color='#3498db', alpha=0.8, edgecolor='black')
+    bars2 = ax3.bar(x_pos + width/2, exploitation_score, width, label='Exploitation (Convergence)', 
+                    color='#f39c12', alpha=0.8, edgecolor='black')
+    
+    ax3.set_xlabel(f'{param_name}', fontsize=11, fontweight='bold')
+    ax3.set_ylabel('Score', fontsize=11, fontweight='bold')
+    ax3.set_title('3. Exploration vs Exploitation Balance', fontsize=12, fontweight='bold')
+    ax3.set_xticks(x_pos)
+    ax3.set_xticklabels([f'{v}' for v in param_values], rotation=45)
+    ax3.grid(True, alpha=0.3, axis='y')
+    ax3.legend(fontsize=10)
+    ax3.set_ylim([0, 1.1])
+    
+    # Plot 4: Execution Time
+    ax4 = axes[1, 1]
+    bars = ax4.bar(range(len(param_values)), exec_times, color='#9b59b6', alpha=0.7, edgecolor='black')
+    
+    ax4.set_xlabel(f'{param_name}', fontsize=11, fontweight='bold')
+    ax4.set_ylabel('Execution Time (seconds)', fontsize=11, fontweight='bold')
+    ax4.set_title('Computation Cost', fontsize=12, fontweight='bold')
+    ax4.set_xticks(range(len(param_values)))
+    ax4.set_xticklabels([f'{v}' for v in param_values], rotation=45)
+    ax4.grid(True, alpha=0.3, axis='y')
     
     for bar, time_val in zip(bars, exec_times):
         height = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width()/2., height,
-                f'{time_val:.3f}s', ha='center', va='bottom', fontsize=9)
+        ax4.text(bar.get_x() + bar.get_width()/2., height,
+                f'{time_val:.3f}s', ha='center', va='bottom', fontsize=8)
+    
+    fig.suptitle(f'Parameter Sensitivity Analysis: {param_name}', fontsize=14, fontweight='bold', y=0.995)
     
     plt.tight_layout()
     safe_param_name = param_name.replace(' ', '_').lower()
@@ -369,8 +407,19 @@ def plot_parameter_sensitivity(param_name: str, results: Dict, output_dir: str):
     
     print(f"  Plot saved: sensitivity_{safe_param_name}.png")
 
-def plot_sensitivity_heatmap(sensitivity_results: Dict, output_dir: str):
-    """Generate heatmap of parameter sensitivity across multiple parameters."""
+def plot_sensitivity_heatmap(sensitivity_results: Dict, output_dir: str, base_params: Dict = None):
+    """Generate heatmaps for each parameter showing 3 key metrics.
+    
+    Metrics displayed:
+    1. Best/Average Quality: Lower fitness is better
+    2. Robustness: Lower std deviation is better (more consistent)
+    3. Exploration vs Exploitation: Balance between early improvement and convergence
+    
+    Args:
+        sensitivity_results: Dict with sensitivity analysis results for each parameter
+        output_dir: Directory to save the heatmaps
+        base_params: Base parameters used in the analysis (for display purposes)
+    """
     if not sensitivity_results:
         print("No sensitivity results to plot")
         return
@@ -378,42 +427,82 @@ def plot_sensitivity_heatmap(sensitivity_results: Dict, output_dir: str):
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     
     param_names = list(sensitivity_results.keys())
-    max_values_len = max(len(v['param_values']) for v in sensitivity_results.values()) if sensitivity_results else 0
-    if max_values_len == 0: return
-
-    matrix = np.full((len(param_names), max_values_len), np.nan)
-    labels_x = ["" for _ in range(max_values_len)]
+    num_params = len(param_names)
     
-    for i, param_name in enumerate(param_names):
-        results = sensitivity_results[param_name]
-        fitness_values = results['best_fitness']
-        
-        for j, fitness in enumerate(fitness_values):
-            matrix[i, j] = fitness
-        
-        if len(results['param_values']) > len(labels_x) or not any(labels_x):
-             labels_x = [f'{v}' for v in results['param_values']]
-
-    fig, ax = plt.subplots(figsize=(max(12, max_values_len * 1.5), 6))
+    # Create a figure with 3 rows (one for each metric) and columns for each parameter
+    cols = num_params
+    rows = 3  # Three metrics: Quality, Robustness, Exploration vs Exploitation
     
-    im = ax.imshow(matrix, cmap='RdYlGn_r', aspect='auto')
+    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 3.5 * rows))
     
-    ax.set_yticks(np.arange(len(param_names)))
-    ax.set_yticklabels(param_names, fontsize=11)
-    ax.set_xticks(np.arange(max_values_len))
-    ax.set_xticklabels(labels_x, rotation=45, ha='right')
+    # Handle single parameter case
+    if num_params == 1:
+        axes = axes.reshape(3, 1)
     
-    ax.set_xlabel('Parameter Value', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Parameter Name', fontsize=12, fontweight='bold')
-    ax.set_title('Parameter Sensitivity Heatmap (Best Fitness)', fontsize=14, fontweight='bold')
+    # Create title with base parameters information
+    title = 'Parameter Sensitivity Analysis: 3 Key Metrics'
+    if base_params:
+        fixed_params = {k: v for k, v in base_params.items() if k not in param_names}
+        if fixed_params:
+            fixed_str = ", ".join([f"{k}={v}" for k, v in fixed_params.items()])
+            title += f"\nBase Parameters: {fixed_str}"
     
-    cbar = plt.colorbar(im, ax=ax)
-    cbar.set_label('Best Fitness Value', fontsize=11)
+    fig.suptitle(title, fontsize=16, fontweight='bold', y=0.995)
     
-    for i in range(len(param_names)):
-        for j in range(matrix.shape[1]):
-            if not np.isnan(matrix[i, j]):
-                ax.text(j, i, f'{matrix[i, j]:.2e}', ha="center", va="center", color="black", fontsize=8)
+    # Metric configurations: (metric_key, title, cmap, lower_is_better)
+    metrics = [
+        ('best_fitness', 'Best/Average Quality (Lower is Better)', 'RdYlGn_r', True),
+        ('robustness', 'Robustness: Consistency (Lower Std is Better)', 'RdYlGn_r', True),
+        ('exploration_score', 'Exploration Rate (Early Improvement)', 'YlGn', False),
+    ]
+    
+    # Plot each metric as a row
+    for metric_idx, (metric_key, metric_title, cmap, lower_better) in enumerate(metrics):
+        for param_idx, param_name in enumerate(param_names):
+            ax = axes[metric_idx, param_idx] if num_params > 1 else axes[metric_idx]
+            results = sensitivity_results[param_name]
+            param_values = results['param_values']
+            
+            # Get metric values
+            if metric_key in results:
+                metric_values = results[metric_key]
+            else:
+                metric_values = [0] * len(param_values)
+            
+            # Create a 1D heatmap
+            matrix = np.array([metric_values])
+            
+            # Display heatmap
+            im = ax.imshow(matrix, cmap=cmap, aspect='auto')
+            
+            # Set axes labels
+            ax.set_xticks(np.arange(len(param_values)))
+            ax.set_xticklabels([f'{v}' for v in param_values], fontsize=9, fontweight='bold')
+            
+            if metric_idx == 0:
+                ax.set_yticks([0])
+                ax.set_yticklabels([param_name], fontsize=10, fontweight='bold')
+            else:
+                ax.set_yticks([])
+            
+            if metric_idx == 2:  # Only bottom row shows x-axis label
+                ax.set_xlabel(f'{param_name} Values', fontsize=10, fontweight='bold')
+            
+            if param_idx == 0:  # Only left column shows metric title
+                ax.set_ylabel(metric_title.split(':')[0], fontsize=10, fontweight='bold')
+            
+            # Add metric values as text
+            for j, value in enumerate(metric_values):
+                ax.text(j, 0, f'{value:.2e}', ha="center", va="center", 
+                       color="black", fontsize=8, fontweight='bold')
+            
+            # Add colorbar
+            cbar = plt.colorbar(im, ax=ax)
+            cbar.set_label('Value', fontsize=8)
+            
+            # Add grid
+            ax.set_xticks(np.arange(len(param_values)) - 0.5, minor=True)
+            ax.grid(which='minor', color='white', linestyle='-', linewidth=2, axis='x')
     
     plt.tight_layout()
     output_path = Path(output_dir) / "sensitivity_heatmap.png"
@@ -421,3 +510,15 @@ def plot_sensitivity_heatmap(sensitivity_results: Dict, output_dir: str):
     plt.close()
     
     print(f"\nHeatmap saved: sensitivity_heatmap.png")
+    print("\nMetric Interpretation:")
+    print("  • Best/Average Quality: Lower fitness values indicate better solutions")
+    print("  • Robustness: Lower standard deviation indicates more consistent performance")
+    print("  • Exploration Rate: Higher early improvement indicates better exploration tendency")
+    
+    # Also print base parameters info to console
+    if base_params:
+        fixed_params = {k: v for k, v in base_params.items() if k not in param_names}
+        if fixed_params:
+            print("\nBase Parameters (kept constant during analysis):")
+            for param, value in fixed_params.items():
+                print(f"  {param}: {value}")

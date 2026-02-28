@@ -90,9 +90,9 @@ def main():
     display_df = df_results.drop(columns=['Raw_Costs'])
     print(display_df.to_string(index=False))
     
-    visualizer = BenchmarkVisualizer(output_dir="Lab1_results")
+    visualizer = BenchmarkVisualizer(output_dir="Lab3_results")
     visualizer.generate_all_plots(df_results, framework.convergence_data)
-    print("\n-> Đã tạo xong biểu đồ cực xịn! Vui lòng kiểm tra thư mục 'Lab1_results'.")
+    print("\n-> Đã tạo xong biểu đồ cực xịn! Vui lòng kiểm tra thư mục 'Lab3_results'.")
 
 if __name__ == "__main__":
     import scipy # Kiểm tra xem thư viện scipy đã cài chưa

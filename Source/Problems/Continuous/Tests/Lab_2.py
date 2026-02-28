@@ -67,7 +67,9 @@ def main():
     # Grid of parameter values to test
     param_grid = {
         "w": [0.4, 0.6, 0.729, 0.9, 1.2], 
-        "population_size": [10, 20, 50, 100, 200]
+        "population_size": [10, 20, 50, 100, 200],
+        "c1": [0.5, 1.0, 1.494, 2.0, 2.5],
+        "c2": [0.5, 1.0, 1.494, 2.0, 2.5]
     }
 
     # --- Run Analysis for Each Problem ---
@@ -97,10 +99,6 @@ def main():
             output_dir=str(output_dir)
         )
         
-        # Optionally, generate a heatmap for a visual overview of all tested parameters
-        print(f"\nGenerating sensitivity heatmap for {func_name}...")
-        analyzer.generate_heatmap(str(output_dir))
-
     print("\n" + "="*80)
     print("SENSITIVITY ANALYSIS COMPLETE.")
     print(f"-> All results and plots saved in subdirectories under: {OUTPUT_DIR_BASE}")

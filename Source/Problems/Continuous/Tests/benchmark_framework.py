@@ -208,6 +208,7 @@ class ParameterSensitivityAnalyzer:
         self.dimensions = dimensions
         self.num_runs = num_runs
         self.sensitivity_results = {}
+        self.base_params = {}
     
     def analyze_parameter(self, algorithm_class, param_name: str, param_values: List, 
                          base_params: Dict, output_dir: str = "sensitivity_plots") -> Dict:
@@ -230,9 +231,11 @@ class ParameterSensitivityAnalyzer:
         results = {
             'param_name': param_name,
             'param_values': param_values,
-            'best_fitness': [],
-            'mean_fitness': [],
-            'std_fitness': [],
+            'best_fitness': [],           # Best/Average Quality: Best fitness
+            'mean_fitness': [],           # Best/Average Quality: Mean fitness
+            'robustness': [],             # Robustness: Std deviation of fitness
+            'exploration_score': [],      # Exploration: Early convergence rate
+            'exploitation_score': [],     # Exploitation: Late convergence rate
             'exec_times': []
         }
         
@@ -248,7 +251,7 @@ class ParameterSensitivityAnalyzer:
             
             # Run algorithm multiple times
             best_values = []
-            mean_values = []
+            convergence_curves = []
             times = []
             
             for run in range(self.num_runs):
@@ -267,7 +270,12 @@ class ParameterSensitivityAnalyzer:
                     
                     best_cost = result.get('cost', result.get('best_cost', float('inf')))
                     best_values.append(best_cost)
-                    mean_values.append(best_cost)
+                    
+                    # Get convergence curve for exploration vs exploitation analysis
+                    history = result.get('history', getattr(algorithm, 'history', []))
+                    if history:
+                        convergence_curves.append(history)
+                    
                     times.append(elapsed_time)
                     
                 except Exception as e:
@@ -275,24 +283,88 @@ class ParameterSensitivityAnalyzer:
                     continue
             
             if best_values:
-                results['best_fitness'].append(np.min(best_values))
-                results['mean_fitness'].append(np.mean(best_values))
-                results['std_fitness'].append(np.std(best_values))
+                # Compute Best/Average Quality metrics
+                best_fitness = np.min(best_values)
+                mean_fitness = np.mean(best_values)
+                
+                # Compute Robustness (lower std is better - more robust)
+                robustness = np.std(best_values)
+                
+                # Compute Exploration vs Exploitation scores from convergence curves
+                exploration, exploitation = self._compute_exploration_exploitation(convergence_curves)
+                
+                results['best_fitness'].append(best_fitness)
+                results['mean_fitness'].append(mean_fitness)
+                results['robustness'].append(robustness)
+                results['exploration_score'].append(exploration)
+                results['exploitation_score'].append(exploitation)
                 results['exec_times'].append(np.mean(times))
                 
                 print(f"{param_name}={param_value}: "
-                      f"Best={np.min(best_values):.6e}, "
-                      f"Mean={np.mean(best_values):.6e}, "
-                      f"Time={np.mean(times):.4f}s")
+                      f"Best={best_fitness:.6e}, Mean={mean_fitness:.6e}, "
+                      f"Robustness={robustness:.6e}, Expl={exploration:.4f}, Expt={exploitation:.4f}")
         
         self.sensitivity_results[param_name] = results
         viz.plot_parameter_sensitivity(param_name, results, output_dir)
         
         return results
     
+    def _compute_exploration_exploitation(self, convergence_curves: List[List[float]]) -> Tuple[float, float]:
+        """
+        Compute exploration and exploitation scores from convergence curves.
+        
+        Exploration: Measures early-stage improvement (high diversity search)
+        Exploitation: Measures late-stage improvement (convergence quality)
+        
+        Args:
+            convergence_curves: List of convergence histories
+            
+        Returns:
+            Tuple of (exploration_score, exploitation_score)
+        """
+        if not convergence_curves or len(convergence_curves) == 0:
+            return 0.0, 0.0
+        
+        exploration_scores = []
+        exploitation_scores = []
+        
+        for curve in convergence_curves:
+            if len(curve) < 4:
+                continue
+            
+            # Split curve into early (first 25%) and late (last 75%) phases
+            split_point = max(1, len(curve) // 4)
+            
+            initial = curve[0]
+            early_phase = curve[:split_point]
+            late_phase = curve[split_point:]
+            
+            # Exploration: Improvement rate in early phase
+            early_improvement = (initial - early_phase[-1]) / (abs(initial) + 1e-10)
+            exploration_scores.append(max(0, early_improvement))
+            
+            # Exploitation: How well it converges in late phase
+            # Rate of improvement: improvement per iteration
+            if len(late_phase) > 1:
+                late_change = abs(late_phase[-1] - late_phase[0]) / (abs(late_phase[0]) + 1e-10)
+                # Lower change = better exploitation (converged)
+                exploitation = 1.0 / (1.0 + late_change)
+                exploitation_scores.append(exploitation)
+            else:
+                exploitation_scores.append(0.0)
+        
+        avg_exploration = np.mean(exploration_scores) if exploration_scores else 0.0
+        avg_exploitation = np.mean(exploitation_scores) if exploitation_scores else 0.0
+        
+        return float(avg_exploration), float(avg_exploitation)
+    
+    
     def analyze_multiple_parameters(self, algorithm_class, param_grid: Dict[str, List],
                                    base_params: Dict, output_dir: str = "sensitivity_plots"):
         """Analyze multiple parameters sequentially."""
+        # Store base parameters for later use in visualization
+        self.base_params = base_params.copy()
+        
         print("\n" + "="*70)
         print("PARAMETER SENSITIVITY ANALYSIS (Multiple Parameters)")
         print("="*70)
@@ -303,4 +375,4 @@ class ParameterSensitivityAnalyzer:
     
     def generate_heatmap(self, output_dir: str = "sensitivity_plots"):
         """Generate heatmap of parameter sensitivity by calling the visualizer."""
-        viz.plot_sensitivity_heatmap(self.sensitivity_results, output_dir)
+        viz.plot_sensitivity_heatmap(self.sensitivity_results, output_dir, self.base_params)
