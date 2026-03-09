@@ -14,6 +14,9 @@ class BenchmarkFramework:
         print(f"Bắt đầu Benchmark: {problem_name} (Số lần chạy: {num_runs})")
         print(f"{'='*60}")
         
+        # Track tất cả histories để pad về độ dài cùng nhau sau (cho convergence plots)
+        all_algo_histories = {}
+        
         for algo_name, algo in algorithms.items():
             print(f"Đang chạy {algo_name}...")
             costs, times, nodes_list, histories = [], [], [], []
@@ -38,6 +41,7 @@ class BenchmarkFramework:
                     cost = res.get('cost', float('inf'))
                     history = res.get('history', [])
                 
+                # Nếu không lấy được history từ result dict, lấy từ attribute của algo
                 if not history:
                     history = getattr(algo, 'history', [])
 
@@ -46,8 +50,8 @@ class BenchmarkFramework:
                 costs.append(cost)
                 times.append(end_time - start_time)
                 nodes_list.append(nodes)
-                if history:
-                    histories.append(history)
+                # Thêm history ngay cả khi rỗng để tránh skip
+                histories.append(history)
 
             # Tính toán thống kê
             valid_costs = [c for c in costs if c != float('inf')]
@@ -71,11 +75,33 @@ class BenchmarkFramework:
                 'Raw_Costs': costs # Giữ lại dữ liệu thô để vẽ Boxplot
             })
 
-            # Trung bình hóa lịch sử hội tụ (Convergence)
-            if histories:
-                min_len = min(len(h) for h in histories)
-                avg_history = np.mean([h[:min_len] for h in histories], axis=0)
-                self.convergence_data[f"{problem_name}_{algo_name}"] = avg_history
+            # Lưu histories để xử lý sau (pad để cùng độ dài)
+            all_algo_histories[algo_name] = histories
+        
+        # AFTER xử lý tất cả algorithms, pad histories để cùng độ dài
+        # Tìm max_len từ TẤT CẢ algorithms
+        all_valid_histories = []
+        for histories in all_algo_histories.values():
+            all_valid_histories.extend([h for h in histories if len(h) > 0])
+        
+        if all_valid_histories:
+            global_max_len = max(len(h) for h in all_valid_histories)
+            
+            # Giờ pad và tính convergence data cho mỗi algorithm
+            for algo_name, histories in all_algo_histories.items():
+                valid_histories = [h for h in histories if len(h) > 0]
+                if valid_histories:
+                    # Pad tất cả lên global_max_len
+                    padded_histories = []
+                    for h in valid_histories:
+                        if len(h) < global_max_len:
+                            padded = list(h) + [h[-1]] * (global_max_len - len(h))
+                            padded_histories.append(padded)
+                        else:
+                            padded_histories.append(h)
+                    
+                    avg_history = np.mean(padded_histories, axis=0)
+                    self.convergence_data[f"{problem_name}_{algo_name}"] = avg_history
 
     def get_dataframe(self):
         return pd.DataFrame(self.results)
