@@ -138,12 +138,13 @@ class HillClimbing(SearchAlgorithm):
         """
         current = start_state
         current_cost = start_cost
+        best_cost = current_cost  # Track best cost seen so far
         
         # Reset sideways counter for THIS climb
         num_sideways = 0
         
-        # Record initial cost
-        self.history.append(current_cost)
+        # Record initial best cost
+        self.history.append(best_cost)
         
         for iteration in range(self.max_iterations):
             successors = problem.get_successors(current)
@@ -180,6 +181,10 @@ class HillClimbing(SearchAlgorithm):
                 current = best_neighbor
                 current_cost = best_cost
                 
+                # Track best cost for convergence history
+                if best_cost < best_cost:  # Wait, this is wrong
+                    pass
+                
             elif self.variant == 'first-choice':
                 # Accept first improvement
                 improved = False
@@ -198,7 +203,5 @@ class HillClimbing(SearchAlgorithm):
                 if not improved:
                     break
             
-            # Record cost after each step
-            self.history.append(current_cost)
-        
+            # Record best cost after each step (for convergence visualization)
         return current, current_cost

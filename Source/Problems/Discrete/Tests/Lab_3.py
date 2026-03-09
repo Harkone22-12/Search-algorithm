@@ -38,9 +38,8 @@ def main():
 
     # ==========================================
     # 1. KNAPSACK PROBLEM - Kiểm tra Scalability
-    # Chạy qua 2 size: 10 và 15
     # ==========================================
-    knapsack_sizes = [10, 15]
+    knapsack_sizes = [10, 15, 25, 50, 100, 200]
     for size in knapsack_sizes:
         kp_problem = KnapsackProblem(dimensions=size, capacity=50.0)
         
@@ -50,7 +49,7 @@ def main():
             "Hill Climbing": HillClimbing(variant='steepest', max_iterations=200)
         }
         # Chỉ chạy thuật toán cổ điển ở size nhỏ để tránh bị treo máy
-        if size <= 15:
+        if size <= 25:
             kp_algorithms["A*"] = AStarSearch()
             kp_algorithms["BFS"] = BFS()
             kp_algorithms["DFS"] = DFS()
@@ -59,9 +58,8 @@ def main():
 
     # ==========================================
     # 2. TSP PROBLEM - Kiểm tra Scalability
-    # Chạy qua 2 size: 6 và 8 (Do 10! rất lớn, có thể làm BFS chạy lâu)
     # ==========================================
-    tsp_sizes = [6, 8]
+    tsp_sizes = [6, 8, 10, 20, 50, 100]
     for size in tsp_sizes:
         tsp_problem = TSPProblem(dimensions=size) 
         
@@ -71,7 +69,7 @@ def main():
             "SA": SimulatedAnnealing(initial_temperature=100.0, cooling_rate=0.9, max_iterations=50),
             "Hill Climbing": HillClimbing(variant='steepest', max_iterations=200)
         }
-        if size <= 8:
+        if size <= 10:
             tsp_algorithms["A*"] = AStarSearch()
             tsp_algorithms["BFS"] = BFS()
             tsp_algorithms["DFS"] = DFS()
